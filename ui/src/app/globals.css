@@ -31,3 +31,38 @@ body {
     text-wrap: balance;
   }
 }
+
+.tile {
+  text-align: center;
+  width: 2rem;
+  height: 2rem;
+  font-size: 1rem;
+  line-height: 2rem;
+  background-color: black;
+  border: lighten(black, 10%) 4px inset;
+}
+
+.tile[data-count="8"] {
+  color: #FF0000;
+}
+.tile[data-count="7"] {
+  color: #FF3100;
+}
+.tile[data-count="6"] {
+  color: #FF6200;
+}
+.tile[data-count="5"] {
+  color: #FF9400;
+}
+.tile[data-count="4"] {
+  color: #FFC500;
+}
+.tile[data-count="3"] {
+  color: #FFFE00;
+}
+.tile[data-count="2"] {
+  color: #D5FF00;
+}
+.tile[data-count="1"] {
+  color: #A4FF00;
+}
