@@ -12,18 +12,29 @@ const content: Record<TileState, string> = {
 export function Tile({
   state,
   mineCount = 0,
+  x,
+  y,
+  onClick
 }: {
   state: TileState,
   mineCount: number,
+  x: number,
+  y: number,
+  onClick: (x: number, y: number) => void,
 }) {
   // TODO: Accessibilty
   let inside = content[state];
   if (state === 'visible') {
-    inside = mineCount > 0? `${mineCount}` : '';
+    inside = mineCount > 0 ? `${mineCount}` : '';
   }
 
   return (
-    <div className={clsx('tile', state)} data-count={state === 'visible' ? mineCount : undefined}>
+    <div
+      className={clsx('tile', state)}
+      data-x={x} data-y={y}
+      data-count={state === 'visible' ? mineCount : undefined}
+      onClick={state === 'flag' || state === 'unknown' ? () => onClick(x, y) : undefined}
+    >
       {inside}
     </div>
   );
