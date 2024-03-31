@@ -9,6 +9,7 @@ const content: Record<TileState, string> = {
   explosion: '💥',
 };
 
+// TODO: Consider using a memo here since it is pure
 export function Tile({
   state,
   mineCount = 0,
