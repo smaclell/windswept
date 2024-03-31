@@ -71,10 +71,17 @@ function reveal(state: SectionState, x: number, y: number) {
 
 export function randomizer(size: number, count: number): Point[] {
   const points: Point[] = [];
+  const unique = new Set<string>();
   for (let i = 0; i < count; i++) {
     const x = Math.floor(Math.random() * size);
     const y = Math.floor(Math.random() * size);
-    points.push({ x, y });
+    const key = `${x},${y}`;
+    if (!unique.has(key)) {
+      unique.add(key);
+      points.push({ x, y });
+    } else {
+      i--;
+    }
   }
 
   return points;
