@@ -19,10 +19,11 @@ export type SectionState = {
   offsetY: number;
   playing: boolean;
   _tileState: Record<string, TileData>;
+  _nearby: Record<string, SectionState['update']>;
   initialize(mines: Point[]): void;
   tile(x: number, y: number): TileData;
   update(action: Mode, x: number, y: number): void;
-  applyNeighbour(range: {point: Point, mineCount: number, edgeCount: number }[]): void;
+  applyNeighbour(key: string, updater: SectionState['update'], range: {point: Point, mineCount: number, edgeCount: number }[]): void;
 };
 
 export function getNeighbourKeys(x: number, y: number, size: number) {
@@ -60,8 +61,6 @@ function reveal(state: SectionState, x: number, y: number) {
   const key = `${x},${y}`;
   const current = state._tileState[key];
   current.state = 'visible';
-  // TODO: Apply Neighbours
-  // TODO: Edges
   if (current.mineCount === 0) {
     const neighbours = getNeighbourKeys(x, y, state.size);
     for (const neighbour of neighbours) {
@@ -69,6 +68,33 @@ function reveal(state: SectionState, x: number, y: number) {
       if (neighbourTile.state === 'unknown') {
         reveal(state, neighbourTile.x, neighbourTile.y);
       }
+    }
+
+    // x is a column, y is a row
+    // HAX: Expand to hit populated neighbours
+    if (x === 0) {
+      state._nearby['-1,0']?.('reveal', state.size - 1, y);
+    } else if (x === state.size - 1) {
+      state._nearby['1,0']?.('reveal', 0, y);
+    }
+
+    if (y === 0) {
+      state._nearby['0,-1']?.('reveal', x, state.size - 1);
+    } else if (y === state.size - 1) {
+      state._nearby['0,1']?.('reveal', x, 0);
+    }
+
+    if (isCorner(state.size, x, y)) {
+      if (x === 0 && y === 0) {
+        state._nearby['-1,-1']?.('reveal', state.size - 1, state.size - 1);
+      } else if (x === state.size - 1 && y === 0) {
+        state._nearby['1,-1']?.('reveal', 0, state.size - 1);
+      } else if (x === 0 && y === state.size - 1) {
+        state._nearby['-1,1']?.('reveal', state.size - 1, 0);
+      } else if (x === state.size - 1 && y === state.size -1) {
+        state._nearby['1,11']?.('reveal', 0, 0);
+      }
+
     }
   }
 }
@@ -123,6 +149,7 @@ export function createSectionStore(size: number, offsetX: number, offsetY: numbe
     mode: 'reveal',
     playing: true,
     _tileState: {},
+    _nearby: {},
     initialize(mines) { // Neighbours are applied externally
       const tileState: SectionState['_tileState'] = {};
 
@@ -191,8 +218,14 @@ export function createSectionStore(size: number, offsetX: number, offsetY: numbe
 
       throw new Error(`Unknown mode ${mode}`);
     },
-    applyNeighbour(range) {
+    applyNeighbour(key, updater, range) {
+      // TODO: What if we load it and the nearby has already been seen
       set(produce((state) => {
+        if (state._nearby[key]) {
+          state._nearby[key] = updater;
+          return;
+        }
+
         range.forEach(({ point, mineCount, edgeCount }) => {
           const { x, y } = point;
           const key = `${x},${y}`;

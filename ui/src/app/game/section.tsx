@@ -5,11 +5,11 @@ import type { Mode } from '@/data/types';
 import Tile from "./tile";
 
 export default function Section({ store, mode }: { store: SectionStore, mode: Mode }) {
-  const { size, tile, update } = useStore(store);
+  const { offsetX, offsetY, size, tile, update } = useStore(store);
   const bound = useCallback((x: number, y: number) => update(mode, x, y), [mode, update]);
 
   return (
-    <section className="section" data-size={size}>
+    <section className="section" data-size={size} data-offset-x={offsetX} data-offset-y={offsetY}>
       {[...Array(size)].map((_, x) => (
         <Fragment key={x}>
           {[...Array(size)].map((_, y) => {

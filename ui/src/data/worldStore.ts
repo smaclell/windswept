@@ -40,7 +40,7 @@ const directions = [
 ];
 
 // TODO: Encapsulation Fail!!!!
-type RangeData = Parameters<SectionState['applyNeighbour']>[0];
+type RangeData = Parameters<SectionState['applyNeighbour']>[2];
 
 function getRange(tiles: SectionState['_tileState'], dx: number, dy: number): RangeData {
   if (dx !== 0 && dy !== 0) {
@@ -137,8 +137,14 @@ export function createWorldStore(factory: Creator) {
       directions.forEach(({ dx, dy }) => {
         const neighbour = peek(target.offsetX + dx, target.offsetY + dy);
         if (neighbour) {
-          store.getState().applyNeighbour(getRange(neighbour.getState()._tileState, dx, dy));
-          neighbour.getState().applyNeighbour(getRange(store.getState()._tileState, -dx, -dy));
+          let storeState = store.getState();
+          let neighbourState = neighbour.getState();
+
+          storeState.applyNeighbour(`${dx},${dy}`, neighbourState.update, getRange(neighbourState._tileState, dx, dy));
+
+          storeState = store.getState();
+          neighbourState = neighbour.getState();
+          neighbourState.applyNeighbour(`${-dx},${-dy}`, storeState.update, getRange(storeState._tileState, -dx, -dy));
         }
       });
 
@@ -197,8 +203,8 @@ export function createWorldStore(factory: Creator) {
     maxY: 0,
     initialize() {
       const { request, process } = get();
-      for (let x = -5; x <= 5; x++) {
-        for (let y = -5; y <= 5; y++) {
+      for (let x = -3; x <= 3; x++) {
+        for (let y = -3; y <= 3; y++) {
           request(x, y);
         }
       }
