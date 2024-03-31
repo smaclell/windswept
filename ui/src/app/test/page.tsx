@@ -1,7 +1,8 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react';
 import { useStore } from 'zustand';
-import { randomizer, createSectionStore, Mode } from '@/store';
+import { randomizer, createSectionStore } from '@/data/sectionStore';
+import { Mode } from '@/data/types';
 import Tile from "../game/tile";
 import Section from '../game/section';
 import Layout from '../game/layout';

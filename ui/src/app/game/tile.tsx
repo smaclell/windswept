@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { TileState } from '@/store';
+import { TileState } from '@/data/types';
 
 const content: Record<TileState, string> = {
   unknown: '',

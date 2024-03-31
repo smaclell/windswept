@@ -1,9 +1,7 @@
 import { create } from 'zustand';
 import { produce } from 'immer';
-
-// TODO: You might want to allow multiple states to be active at once
-export type TileState = 'visible' | 'unknown' | 'flag' | 'mine' | 'explosion';
-export type Mode = 'flag' |'reveal';
+import { TileState } from './types';
+import { Mode } from './types';
 
 type Point = {
   x: number;
