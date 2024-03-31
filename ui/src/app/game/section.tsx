@@ -1,7 +1,7 @@
 import { useCallback, Fragment } from "react";
 import { useStore } from "zustand";
 import type { Mode, SectionStore } from "@/store";
-import { Tile } from "./tile";
+import Tile from "./tile";
 
 export default function Section({ store, mode }: { store: SectionStore, mode: Mode }) {
   const { size, tile, update } = useStore(store);

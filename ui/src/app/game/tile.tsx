@@ -10,7 +10,7 @@ const content: Record<TileState, string> = {
 };
 
 // TODO: Consider using a memo here since it is pure
-export function Tile({
+export default function Tile({
   state,
   mineCount = 0,
   x,

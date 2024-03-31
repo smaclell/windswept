@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useStore } from 'zustand';
 import { randomizer, createSectionStore, Mode, SectionStore } from '@/store';
-import { Tile } from "../game/tile";
+import Tile from "../game/tile";
 import Section from '../game/section';
 
 const size = 8;
