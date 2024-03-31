@@ -29,14 +29,14 @@ const sections = new Map<string, SectionStore>();
 
 const ItemRenderer = React.memo(function InnerItemRenderer({ rowIndex, columnIndex, isScrolling, data, style }: Indexes & { isScrolling?: boolean; data: Props, style?: React.CSSProperties }) {
   const [key, offsetX, offsetY] = fullItemKey({ columnIndex, rowIndex }, data);
-  if (!sections.has(key)) {
+  if (!sections.has(key) && !isScrolling) {
     sections.set(key, data.createSection(offsetX, offsetY));
   }
 
   const store = sections.get(key);
   return (
     <div style={style} key={key}>
-      { isScrolling || !store ? (
+      { !store ? (
         <Skeleton size={size} />
       ) : (
         <Section store={store} mode="reveal" />
