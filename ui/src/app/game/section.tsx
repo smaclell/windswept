@@ -15,9 +15,9 @@ export default function Section({ store, mode }: { store: SectionStore, mode: Mo
           {[...Array(size)].map((_, y) => {
             const key = `${x},${y}`;
             const data = tile(x, y);
-            const { state, mineCount } = data;
+            const { state, mineCount, edgeCount } = data;
             return (
-              <Tile key={key} state={state} mineCount={mineCount} x={x} y={y} onClick={bound} />
+              <Tile key={key} state={state} mineCount={mineCount} edgeCount={edgeCount} x={x} y={y} onClick={bound} />
             );
           })}
         </Fragment>

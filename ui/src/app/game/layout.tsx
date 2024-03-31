@@ -1,8 +1,11 @@
 import React, { useCallback, useMemo } from 'react';
 import { FixedSizeGrid } from 'react-window';
-import { SectionStore } from '@/data/sectionStore';
+import type { SectionStore } from '@/data/sectionStore';
+import type { WorldStore } from '@/data/worldStore';
 import Section from './section';
 import Skeleton from './skeleton';
+import { useStore } from 'zustand';
+import { useShallow } from 'zustand/react/shallow';
 
 // TODO: You ran out of brain power!
 // Implement the loading for the world. Apply neighbours. Have "peek" to try to get the next one
@@ -12,12 +15,18 @@ import Skeleton from './skeleton';
 const size = 8;
 const side = size * (24 + 8); // see CSS to for units (length + border)
 
+type StoreData = {
+  minX: number,
+  maxX: number,
+  minY: number,
+  maxY: number,
+  peek: (offsetX: number, offsetY: number) => SectionStore | undefined,
+  request: (offsetX: number, offsetY: number) => void,
+  process: () => void,
+};
+
 type Indexes = { columnIndex: number, rowIndex: number };
 type Bounds = { minX: number, maxX: number, minY: number, maxY: number };
-type Props = Bounds & {
-  // TODO: Make this async
-  createSection: (offsetX: number, offsetY: number) => SectionStore;
-};
 
 function fullItemKey({ columnIndex, rowIndex }: Indexes, { minX, minY }: Bounds): [string, number, number] {
   const offsetX = columnIndex + minX;
@@ -25,44 +34,43 @@ function fullItemKey({ columnIndex, rowIndex }: Indexes, { minX, minY }: Bounds)
   return [`${offsetX},${offsetY}`, offsetX, offsetY];
 }
 
-const sections = new Map<string, SectionStore>();
-
 // TODO: Use Suspense for even smoother transitions
-const ItemRenderer = React.memo(function InnerItemRenderer({ rowIndex, columnIndex, isScrolling, data, style }: Indexes & { isScrolling?: boolean; data: Props, style?: React.CSSProperties }) {
+// TODO: Use the areEqual comparison to ignore identical styles
+const ItemRenderer = React.memo(function InnerItemRenderer({ rowIndex, columnIndex, isScrolling, data, style }: Indexes & { isScrolling?: boolean; data: StoreData, style?: React.CSSProperties }) {
   const [key, offsetX, offsetY] = fullItemKey({ columnIndex, rowIndex }, data);
-  if (!sections.has(key) && !isScrolling) {
-    sections.set(key, data.createSection(offsetX, offsetY));
+  const section = data.peek(offsetX, offsetY);
+  if (!section && !isScrolling) {
+    data.request(offsetX, offsetY);
   }
 
-  const store = sections.get(key);
   return (
     <div style={style} key={key}>
-      { !store ? (
+      { !section ? (
         <Skeleton size={size} />
       ) : (
-        <Section store={store} mode="reveal" />
+        <Section store={section} mode="reveal" />
       )}
     </div>
   );
 });
 
 export default function Layout({
-  minX,
-  maxX,
-  minY,
-  maxY,
-  createSection,
-}: Props) {
-  let columns = maxX - minX + 1;
-  let rows = maxY - minY + 1;
+  store,
+}: { store: WorldStore } ) {
+  const data = useStore(store, useShallow(state => ({
+    minX: state.minX,
+    maxX: state.maxX,
+    minY: state.minY,
+    maxY: state.maxY,
+    request: state.request,
+    process: state.process,
+    peek: state.peek,
+    rowIndexToColumn: (rowIndex: number) => rowIndex + data.minY,
+    columnIndexToColumn: (colmnIndex: number) => colmnIndex + data.minX,
+  })));
 
-  const data: Props = useMemo(() => ({
-    minX,
-    maxX,
-    minY,
-    maxY,
-    createSection,
-  }), [minX, maxX, minY, maxY, createSection]);
+  let columns = data.maxX - data.minX + 1;
+  let rows = data.maxY - data.minY + 1;
 
   const itemKey = useCallback((indexes: Indexes) => fullItemKey(indexes, data)[0], [data]);
 
@@ -87,13 +95,21 @@ export default function Layout({
     visibleRowStopIndex: number;
   }) => {
     // All index params are numbers.
-  }, []);
+    /*
+    for (let x = data.columnIndexToColumn(visibleColumnStartIndex); x <= data.columnIndexToColumn(visibleColumnStopIndex); x++) {
+      for (let y = data.rowIndexToColumn(visibleRowStartIndex); y <= data.rowIndexToColumn(visibleRowStopIndex); y++) {
+        data.request(x, y);
+      }
+    }
+    */
+    data.process();
+  }, [data]);
 
   return (
       <FixedSizeGrid
         itemKey={itemKey}
-        initialScrollTop={side * (0 - minX + 1)}
-        initialScrollLeft={side * (0 - minY + 1)}
+        initialScrollTop={side * (0 - data.minX + 1)}
+        initialScrollLeft={side * (0 - data.minY + 1)}
         itemData={data}
         useIsScrolling
         height={600}

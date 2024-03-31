@@ -13,17 +13,24 @@ const content: Record<TileState, string> = {
 export default function Tile({
   state,
   mineCount = 0,
+  edgeCount = 0,
   x,
   y,
   onClick
 }: {
   state: TileState,
   mineCount: number,
+  edgeCount: number,
   x: number,
   y: number,
   onClick: (x: number, y: number) => void,
 }) {
   // TODO: Accessibilty
+  // Hide the contents if there are still edges to reveal
+  if (edgeCount && state === 'visible') {
+    state = 'unknown';
+  }
+
   let inside = content[state];
   if (state === 'visible') {
     inside = mineCount > 0 ? `${mineCount}` : '';
@@ -31,7 +38,7 @@ export default function Tile({
 
   return (
     <div
-      className={clsx('tile', state)}
+      className={clsx('tile', state, edgeCount > 0 && 'edge')}
       data-x={x} data-y={y}
       data-count={state === 'visible' ? mineCount : undefined}
       onClick={state === 'flag' || state === 'unknown' ? () => onClick(x, y) : undefined}

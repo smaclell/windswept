@@ -52,6 +52,14 @@ body {
   border: #141414 4px outset;
 }
 
+.debug .tile.edge {
+  border: pink 4px solid;
+}
+
+.debug [data-x="0"], .debug [data-x="7"], .debug [data-y="0"], .debug [data-y="7"] {
+  border: green 4px solid;
+}
+
 .tile.edge {
   cursor: progress;
 }

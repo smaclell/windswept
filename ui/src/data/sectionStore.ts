@@ -1,26 +1,31 @@
 import { create } from 'zustand';
 import { produce } from 'immer';
-import { Mode, TileState } from './types';
-
-type Point = {
-  x: number;
-  y: number;
-};
+import { Mode, TileState, Point } from './types';
 
 // TODO: Optimize the lookup to not use strings
 
-type SectionState = {
+type TileData = {
+  state: TileState;
+  mineCount: number;
+  edgeCount: number;
+  mine: boolean;
+  x: number;
+  y: number;
+}
+
+export type SectionState = {
   size: number;
   offsetX: number;
   offsetY: number;
   playing: boolean;
-  _tileState: Record<string, { state: TileState; mineCount: number; mine: boolean, x: number, y: number }>;
+  _tileState: Record<string, TileData>;
   initialize(mines: Point[]): void;
-  tile(x: number, y: number): { state: TileState; mineCount: number };
+  tile(x: number, y: number): TileData;
   update(action: Mode, x: number, y: number): void;
+  applyNeighbour(range: {point: Point, mineCount: number, edgeCount: number }[]): void;
 };
 
-function getNeighbourKeys(x: number, y: number, size: number) {
+export function getNeighbourKeys(x: number, y: number, size: number) {
   const keys: string[] = [];
   if (0 < x) {
     keys.push(`${x-1},${y}`);
@@ -55,6 +60,8 @@ function reveal(state: SectionState, x: number, y: number) {
   const key = `${x},${y}`;
   const current = state._tileState[key];
   current.state = 'visible';
+  // TODO: Apply Neighbours
+  // TODO: Edges
   if (current.mineCount === 0) {
     const neighbours = getNeighbourKeys(x, y, state.size);
     for (const neighbour of neighbours) {
@@ -84,6 +91,30 @@ export function randomizer(size: number, count: number): Point[] {
   return points;
 }
 
+function isCorner(size: number, x: number, y: number) {
+  return (x === 0 || x === size - 1) && (y === 0 || y === size - 1);
+}
+
+function countEdges(size: number, x: number, y: number) {
+  let count = 0;
+  if (x === 0) {
+    count += 3;
+  } else if (x === size - 1) {
+    count += 3;
+  }
+  if (y === 0) {
+    count += 3;
+  } else if (y === size - 1) {
+    count += 3;
+  }
+
+  if (isCorner(size, x, y)) {
+    count--;
+  }
+
+  return count;
+}
+
 export function createSectionStore(size: number, offsetX: number, offsetY: number) {
   return create<SectionState>((set, get) => ({
     size,
@@ -92,7 +123,7 @@ export function createSectionStore(size: number, offsetX: number, offsetY: numbe
     mode: 'reveal',
     playing: true,
     _tileState: {},
-    initialize(mines) { // TODO: Overflow from the neighbours
+    initialize(mines) { // Neighbours are applied externally
       const tileState: SectionState['_tileState'] = {};
 
       // TODO: Make it sparse
@@ -102,6 +133,7 @@ export function createSectionStore(size: number, offsetX: number, offsetY: numbe
             x,
             y,
             state: 'unknown',
+            edgeCount: countEdges(size, x, y),
             mineCount: 0,
             mine: false,
           };
@@ -158,6 +190,17 @@ export function createSectionStore(size: number, offsetX: number, offsetY: numbe
       }
 
       throw new Error(`Unknown mode ${mode}`);
+    },
+    applyNeighbour(range) {
+      set(produce((state) => {
+        range.forEach(({ point, mineCount, edgeCount }) => {
+          const { x, y } = point;
+          const key = `${x},${y}`;
+          const current = state._tileState[key];
+          current.mineCount += mineCount;
+          current.edgeCount -= edgeCount;
+        });
+      }));
     },
   }));
 }

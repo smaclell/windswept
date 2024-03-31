@@ -11,7 +11,7 @@ export default function Skeleton({ size }: { size: number }) {
           {[...Array(size)].map((_, y) => {
             const key = `${x},${y}`;
             return (
-              <Tile key={key} state="unknown" mineCount={0} x={x} y={y} onClick={empty} />
+              <Tile key={key} state="unknown" edgeCount={0} mineCount={0} x={x} y={y} onClick={empty} />
             );
           })}
         </Fragment>
