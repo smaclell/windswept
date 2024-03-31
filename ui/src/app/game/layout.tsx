@@ -27,6 +27,7 @@ function fullItemKey({ columnIndex, rowIndex }: Indexes, { minX, minY }: Bounds)
 
 const sections = new Map<string, SectionStore>();
 
+// TODO: Use Suspense for even smoother transitions
 const ItemRenderer = React.memo(function InnerItemRenderer({ rowIndex, columnIndex, isScrolling, data, style }: Indexes & { isScrolling?: boolean; data: Props, style?: React.CSSProperties }) {
   const [key, offsetX, offsetY] = fullItemKey({ columnIndex, rowIndex }, data);
   if (!sections.has(key) && !isScrolling) {
