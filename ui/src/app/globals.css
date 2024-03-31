@@ -32,14 +32,23 @@ body {
   }
 }
 
+/* TODO: Finalize the colours */
+/* Source: https://www.color-hex.com/color-palette/100312 */
+
 .tile {
   text-align: center;
   width: 2rem;
   height: 2rem;
   font-size: 1rem;
-  line-height: 2rem;
-  background-color: black;
-  border: lighten(black, 10%) 4px inset;
+  line-height: calc(2rem - 8px);
+  background-color: #3b3b3b;
+  border: #222222 4px inset;
+  transition: all 0.2s ease-in-out;
+}
+
+.tile.unknown {
+  background-color: #222222;
+  border: #141414 4px outset;
 }
 
 .tile[data-count="8"] {

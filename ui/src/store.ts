@@ -1,1 +1,1 @@
-export type TileState = 'visible' | 'hidden' | 'flag' | 'mine' | 'explosion';
+export type TileState = 'visible' | 'unknown' | 'flag' | 'mine' | 'explosion';

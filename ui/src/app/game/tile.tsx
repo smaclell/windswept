@@ -2,7 +2,7 @@ import clsx from 'clsx';
 import { TileState } from '@/store';
 
 const content: Record<TileState, string> = {
-  hidden: '',
+  unknown: '',
   visible: ':(',
   flag: '🚩',
   mine: '💣',

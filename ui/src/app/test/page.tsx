@@ -9,10 +9,10 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <h1>Test Page</h1>
       <p>This is the test page to help validate each component and tricky scenarios</p>
-      <section className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
+      <section className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm">
         <h2>Tiles</h2>
         <div className="flex flex-wrap">
-          <Tile state="hidden" mineCount={0} />
+          <Tile state="unknown" mineCount={0} />
           <Tile state="flag" mineCount={0} />
           <Tile state="mine" mineCount={0} />
           <Tile state="explosion" mineCount={0} />
@@ -29,7 +29,7 @@ export default function Home() {
           <Tile state="visible" mineCount={8} />
         </div>
       </section>
-      <section className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
+      <section className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm">
         <h2>Section Interactions</h2>
       </section>
     </main>
