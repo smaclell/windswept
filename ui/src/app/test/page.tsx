@@ -1,12 +1,15 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react';
 import { useStore } from 'zustand';
-import { randomizer, createSectionStore, Mode } from '@/store';
+import { randomizer, createSectionStore, Mode, SectionStore } from '@/store';
 import { Tile } from "../game/tile";
 import Section from '../game/section';
 
 const size = 8;
 const store = createSectionStore(size, 0, 0);
+
+// @ts-ignore - debugging
+globalThis.store = store;
 
 const fakeTileProps = {
   mineCount: 0,
@@ -18,11 +21,13 @@ const fakeTileProps = {
 export default function Home() {
   const { initialize } = useStore(store);
   const [mode, setMode] = useState<Mode>('reveal');
+  const [ready, setReady] = useState(false);
 
   const reset = useCallback(() => initialize(randomizer(size, 8)), [initialize]);
 
   useEffect(() => {
     reset();
+    setReady(true);
   }, [reset]);
 
   if (process.env.NODE_ENV !== 'development') {
@@ -59,7 +64,7 @@ export default function Home() {
           <button className="block" onClick={reset}>Reset</button>
           <button className="block" onClick={() => setMode(mode => mode === 'reveal' ? 'flag' : 'reveal')}>Toggle Mode: {mode}</button>
         </div>
-        <Section store={store} mode={mode} />
+        {ready ? <Section store={store} mode={mode} /> : null}
       </section>
     </main>
   )

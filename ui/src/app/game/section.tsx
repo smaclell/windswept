@@ -1,7 +1,7 @@
+import { useCallback, Fragment } from "react";
 import { useStore } from "zustand";
 import type { Mode, SectionStore } from "@/store";
 import { Tile } from "./tile";
-import { useCallback } from "react";
 
 export default function Section({ store, mode }: { store: SectionStore, mode: Mode }) {
   const { size, tile, update } = useStore(store);
@@ -10,7 +10,7 @@ export default function Section({ store, mode }: { store: SectionStore, mode: Mo
   return (
     <section className="section" data-size={size}>
       {[...Array(size)].map((_, x) => (
-        <>
+        <Fragment key={x}>
           {[...Array(size)].map((_, y) => {
             const key = `${x},${y}`;
             const data = tile(x, y);
@@ -19,7 +19,7 @@ export default function Section({ store, mode }: { store: SectionStore, mode: Mo
               <Tile key={key} state={state} mineCount={mineCount} x={x} y={y} onClick={bound} />
             );
           })}
-        </>
+        </Fragment>
       ))}
     </section>
   );

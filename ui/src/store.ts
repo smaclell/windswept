@@ -119,7 +119,7 @@ export function createSectionStore(size: number, offsetX: number, offsetY: numbe
       }));
     },
     tile(x, y) {
-      return get()._tileState[`${x},${y}`] ?? { state: 'unknown', mineCount: 0 };
+      return get()._tileState[`${x},${y}`];
     },
     update(mode, x, y) {
       if(!get().playing) {
