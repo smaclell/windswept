@@ -5,6 +5,7 @@ import { randomizer, createSectionStore, Mode, SectionStore } from '@/store';
 import Tile from "../game/tile";
 import Section from '../game/section';
 import Skeleton from '../game/skeleton';
+import Layout from '../game/layout';
 
 const size = 8;
 const store = createSectionStore(size, 0, 0);
@@ -23,6 +24,31 @@ export default function Home() {
   const { initialize } = useStore(store);
   const [mode, setMode] = useState<Mode>('reveal');
   const [ready, setReady] = useState(false);
+
+  const [minX, setMinX] = useState(-5);
+  const [maxX, setMaxX] = useState(5);
+  const [minY, setMinY] = useState(-5);
+  const [maxY, setMaxY] = useState(5);
+
+  const createSection = useCallback((offsetX: number, offsetY: number) => {
+    const store = createSectionStore(size, offsetX, offsetY);
+    store.getState().initialize(randomizer(size, 8));
+
+    if (offsetX < minX) {
+      setMinX(offsetX);
+    }
+    if (offsetX > maxX) {
+      setMaxX(offsetX);
+    }
+    if (offsetY < minY) {
+      setMinY(offsetY);
+    }
+    if (offsetY > maxY) {
+      setMaxY(offsetY);
+    }
+
+    return store;
+  }, [maxX, maxY, minX, minY]);
 
   const reset = useCallback(() => initialize(randomizer(size, 8)), [initialize]);
 
@@ -70,10 +96,8 @@ export default function Home() {
       <section className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm">
         <h2>Infinite Load</h2>
         <div>
-          <button className="block" onClick={reset}>Reset</button>
-          <button className="block" onClick={() => setMode(mode => mode === 'reveal' ? 'flag' : 'reveal')}>Toggle Mode: {mode}</button>
         </div>
-        <Skeleton size={size} />
+        <Layout createSection={createSection} minX={minX} maxX={maxX} minY={minY} maxY={maxY} />
       </section>
     </main>
   )
