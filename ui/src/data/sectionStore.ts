@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { produce } from 'immer';
-import { TileState } from './types';
-import { Mode } from './types';
+import { Mode, TileState } from './types';
 
 type Point = {
   x: number;

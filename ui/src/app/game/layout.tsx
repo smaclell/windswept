@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo } from 'react';
 import { FixedSizeGrid } from 'react-window';
+import { SectionStore } from '@/data/sectionStore';
 import Section from './section';
 import Skeleton from './skeleton';
-import { SectionStore } from '@/data/sectionStore';
 
 // TODO: You ran out of brain power!
 // Implement the loading for the world. Apply neighbours. Have "peek" to try to get the next one
