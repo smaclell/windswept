@@ -132,7 +132,15 @@ body {
   grid-template-rows: repeat(8, calc(2rem));
   grid-template-columns: repeat(8 /*attr(data-size, 0)*/, calc(2rem));
 
-  border: #3b3b3b 4px solid;
   width: fit-content;
   height: fit-content;
+}
+
+.skeleton {
+  animation: fadeIn ease-in-out 2s alternate-reverse infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0.5; }
+  to { opacity: 0.8; }
 }
