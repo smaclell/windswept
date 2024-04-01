@@ -228,13 +228,9 @@ export function createWorldStore(factory: Creator) {
 
       for (let x = -defaultBounds; x <= defaultBounds; x++) {
         for (let y = -defaultBounds; y <= defaultBounds; y++) {
-          if (!(x === 0 && y === 0)) {
-            request(x, y);
-          }
+          request(x, y);
         }
       }
-
-      request(0, 0);
 
       process();
       set((state) => ({
