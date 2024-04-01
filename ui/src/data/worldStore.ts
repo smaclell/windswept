@@ -52,6 +52,7 @@ export function __getRange(other: Pick<SectionState, '_tileState'>, dx: number, 
       },
       mineCount: data?.mine ? 1 : 0,
       edgeCount: data ? 1 : 0,
+      reveal: data?.mineCount === 0 && data?.state === 'visible'
     }];
   }
 
@@ -81,6 +82,7 @@ export function __getRange(other: Pick<SectionState, '_tileState'>, dx: number, 
   for (; x < size && y < size; x += ix, y += iy) {
     let mineCount = 0;
     let edgeCount = 0;
+    let reveal = false;
     const nx =
       dx === -1 ? size :
       dx === 1 ? -1 :
@@ -89,12 +91,17 @@ export function __getRange(other: Pick<SectionState, '_tileState'>, dx: number, 
       dy === -1 ? size :
       dy === 1 ? -1 :
       y;
+
     getNeighbourKeys(nx, ny, size).forEach((key) => {
       const data = tiles[key];
       if (data) {
         edgeCount++;
         if (data.mine) {
           mineCount++;
+        }
+
+        if (data.mineCount === 0 && data.state === 'visible') {
+          reveal = true;
         }
       }
     });
@@ -106,6 +113,7 @@ export function __getRange(other: Pick<SectionState, '_tileState'>, dx: number, 
       },
       mineCount,
       edgeCount,
+      reveal,
     });
   }
 
@@ -115,8 +123,6 @@ export function __getRange(other: Pick<SectionState, '_tileState'>, dx: number, 
 export function createWorldStore(factory: Creator) {
   type Api = StoreApi<WorldState>;
   type QueueRecord = { offsetX: number, offsetY: number, retries: number };
-
-  const queue: QueueRecord[] = [];
 
   async function createSection(target: QueueRecord, set: Api['setState'], get: Api['getState']) {
     try {
@@ -133,36 +139,44 @@ export function createWorldStore(factory: Creator) {
       }));
 
       // TODO: Reduce getState calls and force them to be internal to the stores
-      // TODO: Remove debugging
-      if(target.offsetX === 0 && target.offsetY === -1) {
-        response.mines = [
-          { x: 3, y: 7},
-          { x: 4, y: 7},
-          { x: 5, y: 7},
-        ];
-      }
-
       store.getState().initialize(response.mines);
 
-      // TODO: Remove debugging
-      response.mines.forEach((point) => {
-        store.getState().update('flag', point.x, point.y);
-      });
+      // TODO: Introduce a debug mode to see all the flags
+      // response.mines.forEach((point) => {
+      //   store.getState().update('flag', point.x, point.y);
+      // });
 
-      // TODO: This is not adding up
       directions.forEach(({ dx, dy }) => {
         const neighbour = peek(target.offsetX + dx, target.offsetY + dy);
         if (neighbour) {
           let storeState = store.getState();
           let neighbourState = neighbour.getState();
 
-          const neighbourRange = __getRange(neighbourState, dx, dy);
+          let neighbourRange = __getRange(neighbourState, dx, dy);
           storeState.applyNeighbour(dx, dy, neighbourState.update, neighbourRange);
 
           storeState = store.getState();
           neighbourState = neighbour.getState();
-          const storeRange = __getRange(storeState, -dx, -dy);
+          let storeRange = __getRange(storeState, -dx, -dy);
           neighbourState.applyNeighbour(-dx, -dy, storeState.update, storeRange);
+
+          storeState = store.getState();
+          neighbourState = neighbour.getState();
+
+          neighbourRange = __getRange(neighbourState, dx, dy);
+          storeRange = __getRange(storeState, -dx, -dy);
+
+          neighbourRange.forEach(({ point: { x, y }, reveal }) => {
+            if (reveal) {
+              storeState.update('reveal', x, y);
+            }
+          });
+
+          storeRange.forEach(({ point: { x, y }, reveal }) => {
+            if (reveal) {
+              neighbourState.update('reveal', x, y);
+            }
+          });
         }
       });
 
@@ -176,29 +190,37 @@ export function createWorldStore(factory: Creator) {
       }
 
       if (target.retries > 0) {
-        target.retries--;
-        queue.push(target);
+        return {
+          ...target,
+          retries: target.retries - 1,
+        }
       }
     }
   }
 
   const batchSize = 10;
+  const queue: QueueRecord[] = [];
+  const processing = new Set<string>();
   async function innerProcessing(set: Api['setState'], get: Api['getState']) {
-    const promises: Promise<void>[] = [];
+    const promises: Promise<QueueRecord | undefined>[] = [];
 
+    let processed = 0;
     for (let i = 0; i < Math.min(batchSize, queue.length); i++) {
       const item = queue[i];
       const store = get().peek(item.offsetX, item.offsetY);
-      if (!store) {
-        promises.push(createSection(item, set, get));
+      processed++;
+      const key = `${item.offsetX},${item.offsetY}`;
+      if (!store && !processing.has(key)) {
+        processing.add(key);
+        promises.push(createSection(item, set, get).finally(() => processing.delete(key)));
       }
     }
 
-    await Promise.all(promises);
-    queue.splice(0, promises.length);
+    const retries = await Promise.all(promises);
+    queue.splice(0, processed, ...retries.filter(x => x) as QueueRecord[]);
   }
 
-  // TODO: Can debounce queing
+  // TODO: Can we better debounce the queueing?
   function loop(set: Api['setState'], get: Api['getState']) {
     if (queue.length === 0) {
       return;
@@ -220,14 +242,13 @@ export function createWorldStore(factory: Creator) {
     minY: 0,
     maxY: 0,
     initialize() {
-      const defaultBounds = 1;
       const { request, process, gameState } = get();
       if (gameState === GameState.Playing) {
         return;
       }
 
-      for (let x = -defaultBounds; x <= defaultBounds; x++) {
-        for (let y = -defaultBounds; y <= defaultBounds; y++) {
+      for (let x = 0; x <= 5; x++) {
+        for (let y = 0; y <= 5; y++) {
           request(x, y);
         }
       }
@@ -252,13 +273,6 @@ export function createWorldStore(factory: Creator) {
     },
     request(offsetX: number, offsetY: number) {
       queue.push({ offsetX, offsetY, retries: 5 });
-      console.count(`
-
-
-      REQUESTED
-
-      `);
-      console.log({ offsetX, offsetY });
     },
     process() {
       loop(set, get);

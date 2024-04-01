@@ -7,14 +7,11 @@ import Skeleton from './skeleton';
 import { useStore } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
 
-// TODO: You ran out of brain power!
-// Implement the loading for the world. Apply neighbours. Have "peek" to try to get the next one
-
 // TODO: Allow clicks while loading, defer them to when loading is done
 // TODO: Capitalize constants throughout the code.
 const size = 8;
 const side = size * (24 + 8); // see CSS to for units (length + border)
-const overload = 0; // TODO: Remove debugging to prevent the infinite scroll
+const overload = 2;
 
 type StoreData = {
   minX: number,
@@ -40,9 +37,6 @@ function fullItemKey({ columnIndex, rowIndex }: Indexes, { minX, minY }: Bounds)
 const ItemRenderer = React.memo(function InnerItemRenderer({ rowIndex, columnIndex, isScrolling, data, style }: Indexes & { isScrolling?: boolean; data: StoreData, style?: React.CSSProperties }) {
   const [key, offsetX, offsetY] = fullItemKey({ columnIndex, rowIndex }, data);
   const section = data.peek(offsetX, offsetY);
-  if (!section && !isScrolling) {
-    // data.request(offsetX, offsetY);
-  }
 
   return (
     <div style={style} key={key}>
@@ -75,16 +69,11 @@ export default function Layout({
 
   const itemKey = useCallback((indexes: Indexes) => fullItemKey(indexes, data)[0], [data]);
 
-  // TODO: Use this to trigger loading on the left and right
   const onItemsRendered = useCallback(({
     overscanColumnStartIndex,
     overscanColumnStopIndex,
     overscanRowStartIndex,
     overscanRowStopIndex,
-    visibleColumnStartIndex,
-    visibleColumnStopIndex,
-    visibleRowStartIndex,
-    visibleRowStopIndex
   }: {
     overscanColumnStartIndex: number;
     overscanColumnStopIndex: number;
@@ -95,22 +84,20 @@ export default function Layout({
     visibleRowStartIndex: number;
     visibleRowStopIndex: number;
   }) => {
-    // All index params are numbers.
-    /*
-    for (let x = data.columnIndexToColumn(visibleColumnStartIndex); x <= data.columnIndexToColumn(visibleColumnStopIndex); x++) {
-      for (let y = data.rowIndexToColumn(visibleRowStartIndex); y <= data.rowIndexToColumn(visibleRowStopIndex); y++) {
+    // TODO: Allow scrolling left - AKA zoolander mode
+    for (let x = data.columnIndexToColumn(overscanColumnStartIndex); x <= data.columnIndexToColumn(overscanColumnStopIndex); x++) {
+      for (let y = data.rowIndexToColumn(overscanRowStartIndex); y <= data.rowIndexToColumn(overscanRowStopIndex); y++) {
         data.request(x, y);
       }
     }
-    */
-    // data.process();
+    data.process();
   }, [data]);
 
   return (
       <FixedSizeGrid
         itemKey={itemKey}
-        initialScrollTop={side * (0 - data.minX + 1)}
-        initialScrollLeft={side * (0 - data.minY + 1)}
+        initialScrollTop={3 * side}
+        initialScrollLeft={3 * side}
         itemData={data}
         useIsScrolling
         height={600}

@@ -17,6 +17,7 @@ export type RelatedRange = {
   point: Point;
   mineCount: number;
   edgeCount: number;
+  reveal: boolean;
 };
 
 export type SectionState = {
@@ -171,7 +172,7 @@ export function createSectionStore(size: number, offsetX: number, offsetY: numbe
             x,
             y,
             state: 'unknown',
-            edgeCount: countEdges(size, x, y),
+            edgeCount: !(offsetX === 0 && x === 0 || offsetY === 0 && y === 0) ? countEdges(size, x, y) : 0,
             mineCount: 0,
             mine: false,
           };
@@ -215,7 +216,7 @@ export function createSectionStore(size: number, offsetX: number, offsetY: numbe
           const current = state._tileState[key];
             if (current.mine) {
               current.state = 'explosion';
-              // TODO: stop it
+              // TODO: stop the came when you explode
               return;
             } else if (!(current.state === 'unknown' || current.state === 'flag')) {
               return;
@@ -242,7 +243,7 @@ export function createSectionStore(size: number, offsetX: number, offsetY: numbe
     },
     applyNeighbour(dx, dy, updater, range) {
       const updaterKey = `${dx},${dy}`;
-      // TODO: What if we load it and the nearby has already been seen
+      const expand = new Map<string, Point>();
       set(produce((state) => {
         const hadUpdater = !!state._nearby[updaterKey];
         state._nearby[updaterKey] = updater;
@@ -251,7 +252,7 @@ export function createSectionStore(size: number, offsetX: number, offsetY: numbe
           return;
         }
 
-        range.forEach(({ point, mineCount, edgeCount }) => {
+        range.forEach(({ point, mineCount, edgeCount, reveal }) => {
           const { x, y } = point;
           const key = `${x},${y}`;
           const current = state._tileState[key];
@@ -259,6 +260,11 @@ export function createSectionStore(size: number, offsetX: number, offsetY: numbe
           current.edgeCount -= edgeCount;
         });
       }));
+
+      const update = get().update;
+      expand.forEach(({ x, y }) => {
+        update('reveal', x, y);
+      });
     },
   }));
 }

@@ -36,13 +36,12 @@ export default function Tile({
     inside = mineCount > 0 ? `${mineCount}` : '';
   }
 
-  // TODO: Remove debugging
   return (
     <div
       className={clsx('tile', state, edgeCount > 0 && 'edge')}
       data-x={x} data-y={y}
-      data-count={mineCount /*state === 'visible' ? mineCount : undefined*/}
-      data-edges={edgeCount}
+      data-count={process.env.NODE_ENV === 'development' || state === 'visible' ? mineCount : undefined}
+      data-edges={process.env.NODE_ENV === 'development' ? edgeCount : undefined}
       onClick={state === 'flag' || state === 'unknown' ? () => onClick(x, y) : undefined}
     >
       {inside}
