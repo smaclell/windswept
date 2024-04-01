@@ -26,7 +26,6 @@ export default function Tile({
   onClick: (x: number, y: number) => void,
 }) {
   // TODO: Accessibilty
-  // Hide the contents if there are still edges to reveal
   if (edgeCount && state === 'visible') {
     state = 'unknown';
   }

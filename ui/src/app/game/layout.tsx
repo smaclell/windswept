@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { FixedSizeGrid } from 'react-window';
 import type { SectionStore } from '@/data/sectionStore';
 import type { WorldStore } from '@/data/worldStore';
