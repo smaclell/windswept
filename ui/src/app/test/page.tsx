@@ -36,31 +36,6 @@ export default function Home() {
   const [mode, setMode] = useState<Mode>('reveal');
   const [ready, setReady] = useState(false);
 
-  const [minX, setMinX] = useState(-5);
-  const [maxX, setMaxX] = useState(5);
-  const [minY, setMinY] = useState(-5);
-  const [maxY, setMaxY] = useState(5);
-
-  const createSection = useCallback((offsetX: number, offsetY: number) => {
-    const store = createSectionStore(size, offsetX, offsetY);
-    store.getState().initialize(randomizer(size, 8));
-
-    if (offsetX < minX) {
-      setMinX(offsetX);
-    }
-    if (offsetX > maxX) {
-      setMaxX(offsetX);
-    }
-    if (offsetY < minY) {
-      setMinY(offsetY);
-    }
-    if (offsetY > maxY) {
-      setMaxY(offsetY);
-    }
-
-    return store;
-  }, [maxX, maxY, minX, minY]);
-
   const reset = useCallback(() => initialize(randomizer(size, 8)), [initialize]);
 
   useEffect(() => {
