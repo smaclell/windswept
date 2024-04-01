@@ -51,7 +51,13 @@ const ItemRenderer = React.memo(function InnerItemRenderer({ rowIndex, columnInd
 
 export default function Layout({
   store,
-}: { store: WorldStore } ) {
+  width,
+  height,
+}: {
+  store: WorldStore,
+  width: number,
+  height: number,
+}) {
   const data = useStore(store, useShallow(state => ({
     minX: state.minX,
     maxX: state.maxX,
@@ -96,12 +102,10 @@ export default function Layout({
   return (
       <FixedSizeGrid
         itemKey={itemKey}
-        initialScrollTop={3 * side}
-        initialScrollLeft={3 * side}
         itemData={data}
         useIsScrolling
-        height={600}
-        width={800}
+        width={width}
+        height={height}
         columnCount={columns + overload}
         rowCount={rows + overload}
         columnWidth={side}

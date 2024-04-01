@@ -109,7 +109,7 @@ export default function Home() {
         <h2>Infinite Load</h2>
         <div>
         </div>
-        {ready? <Layout store={world} /> : null}
+        {ready? <Layout store={world} width={400} height={400} /> : null}
       </section>
     </main>
   )
