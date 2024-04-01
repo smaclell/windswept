@@ -1,7 +1,7 @@
 import { StoreApi, create } from 'zustand';
 import { produce } from 'immer';
 import type { Interaction, Mode, Point } from './types';
-import { type SectionStore, type SectionState, createSectionStore, getNeighbourKeys } from './sectionStore';
+import { type SectionStore, type SectionState, type RelatedRange, createSectionStore, getNeighbourKeys } from './sectionStore';
 
 enum GameState {
   Playing,
@@ -40,10 +40,8 @@ const directions = [
 ];
 
 // TODO: Encapsulation Fail!!!!
-type RangeData = Parameters<SectionState['applyNeighbour']>[2];
-
 // TODO: Unit testing this method
-export function __getRange(other: Pick<SectionState, '_tileState'>, dx: number, dy: number): RangeData {
+export function __getRange(other: Pick<SectionState, '_tileState'>, dx: number, dy: number): RelatedRange[] {
   const tiles = other._tileState;
   if (dx !== 0 && dy !== 0) {
     const data = tiles[`${dx === -1 ? edge : 0},${dy === -1 ? edge : 0}`];
@@ -79,7 +77,7 @@ export function __getRange(other: Pick<SectionState, '_tileState'>, dx: number, 
     throw new Error('Invalid direction');
   }
 
-  let points: RangeData = [];
+  let points: RelatedRange[] = [];
   for (; x < size && y < size; x += ix, y += iy) {
     let mineCount = 0;
     let edgeCount = 0;
@@ -159,12 +157,12 @@ export function createWorldStore(factory: Creator) {
           let neighbourState = neighbour.getState();
 
           const neighbourRange = __getRange(neighbourState, dx, dy);
-          storeState.applyNeighbour(`${dx},${dy}`, neighbourState.update, neighbourRange);
+          storeState.applyNeighbour(dx, dy, neighbourState.update, neighbourRange);
 
           storeState = store.getState();
           neighbourState = neighbour.getState();
           const storeRange = __getRange(storeState, -dx, -dy);
-          neighbourState.applyNeighbour(`${-dx},${-dy}`, storeState.update, storeRange);
+          neighbourState.applyNeighbour(-dx, -dy, storeState.update, storeRange);
         }
       });
 
