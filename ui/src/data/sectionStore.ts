@@ -155,7 +155,7 @@ function countEdges(size: number, x: number, y: number) {
   return count;
 }
 
-export function createSectionStore(size: number, offsetX: number, offsetY: number) {
+export function createSectionStore(size: number, offsetX: number, offsetY: number, isLost: () => boolean, lose: () => void) {
   return create<SectionState>((set, get) => ({
     size,
     offsetX,
@@ -197,6 +197,9 @@ export function createSectionStore(size: number, offsetX: number, offsetY: numbe
     },
     update(mode, x, y) {
       const key = `${x},${y}`;
+      if (isLost()) {
+        return;
+      }
 
       if (mode === 'flag') {
         return set(produce<SectionState>((state) => {
@@ -216,7 +219,7 @@ export function createSectionStore(size: number, offsetX: number, offsetY: numbe
           const current = state._tileState[key];
             if (current.mine) {
               current.state = 'explosion';
-              // TODO: stop the came when you explode
+              lose();
               return;
             } else if (!(current.state === 'unknown' || current.state === 'flag')) {
               return;

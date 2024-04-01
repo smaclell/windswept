@@ -128,7 +128,12 @@ export function createWorldStore(factory: Creator) {
     try {
       const { peek } = get();
       const response = await factory(target.offsetX, target.offsetY);
-      const store = createSectionStore(size, target.offsetX, target.offsetY);
+      const store = createSectionStore(
+        size,
+        target.offsetX, target.offsetY,
+        () => get().gameState === GameState.Lost,
+        () => set((state) => ({...state, gameState: GameState.Lost })),
+      );
 
       set(produce((state) => {
         state._stores[`${target.offsetX},${target.offsetY}`] = store;

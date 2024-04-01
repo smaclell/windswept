@@ -11,7 +11,8 @@ import Layout from '../game/layout';
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const size = 8;
-const store = createSectionStore(size, 0, 0);
+let lost = false;
+const store = createSectionStore(size, 0, 0, () => lost, () => { lost = true; });
 const world = createWorldStore(async () => {
   await sleep(2000);
   return {
@@ -36,7 +37,10 @@ export default function Home() {
   const [mode, setMode] = useState<Mode>('reveal');
   const [ready, setReady] = useState(false);
 
-  const reset = useCallback(() => initialize(randomizer(size, 8)), [initialize]);
+  const reset = useCallback(() => {
+    lost = false;
+    initialize(randomizer(size, 8));
+  }, [initialize]);
 
   useEffect(() => {
     world.getState().initialize();
