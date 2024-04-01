@@ -17,7 +17,6 @@ export type SectionState = {
   size: number;
   offsetX: number;
   offsetY: number;
-  playing: boolean;
   _tileState: Record<string, TileData>;
   _nearby: Record<string, SectionState['update']>;
   initialize(mines: Point[]): void;
@@ -26,6 +25,7 @@ export type SectionState = {
   applyNeighbour(key: string, updater: SectionState['update'], range: {point: Point, mineCount: number, edgeCount: number }[]): void;
 };
 
+// TODO: Unit test?
 export function getNeighbourKeys(x: number, y: number, size: number) {
   const keys: string[] = [];
   if (0 < x) {
@@ -84,17 +84,14 @@ function reveal(state: SectionState, x: number, y: number) {
       state._nearby['0,1']?.('reveal', x, 0);
     }
 
-    if (isCorner(state.size, x, y)) {
-      if (x === 0 && y === 0) {
-        state._nearby['-1,-1']?.('reveal', state.size - 1, state.size - 1);
-      } else if (x === state.size - 1 && y === 0) {
-        state._nearby['1,-1']?.('reveal', 0, state.size - 1);
-      } else if (x === 0 && y === state.size - 1) {
-        state._nearby['-1,1']?.('reveal', state.size - 1, 0);
-      } else if (x === state.size - 1 && y === state.size -1) {
-        state._nearby['1,11']?.('reveal', 0, 0);
-      }
-
+    if (x === 0 && y === 0) {
+      state._nearby['-1,-1']?.('reveal', state.size - 1, state.size - 1);
+    } else if (x === state.size - 1 && y === 0) {
+      state._nearby['1,-1']?.('reveal', 0, state.size - 1);
+    } else if (x === 0 && y === state.size - 1) {
+      state._nearby['-1,1']?.('reveal', state.size - 1, 0);
+    } else if (x === state.size - 1 && y === state.size -1) {
+      state._nearby['1,11']?.('reveal', 0, 0);
     }
   }
 }
@@ -146,8 +143,6 @@ export function createSectionStore(size: number, offsetX: number, offsetY: numbe
     size,
     offsetX,
     offsetY,
-    mode: 'reveal',
-    playing: true,
     _tileState: {},
     _nearby: {},
     initialize(mines) { // Neighbours are applied externally
@@ -177,7 +172,6 @@ export function createSectionStore(size: number, offsetX: number, offsetY: numbe
 
       set((state) => ({
         ...state,
-        playing: true,
         _tileState: tileState,
       }));
     },
@@ -185,10 +179,6 @@ export function createSectionStore(size: number, offsetX: number, offsetY: numbe
       return get()._tileState[`${x},${y}`];
     },
     update(mode, x, y) {
-      if(!get().playing) {
-        return;
-      }
-
       const key = `${x},${y}`;
 
       if (mode === 'flag') {
@@ -208,7 +198,7 @@ export function createSectionStore(size: number, offsetX: number, offsetY: numbe
           const current = state._tileState[key];
             if (current.mine) {
               current.state = 'explosion';
-              state.playing = false;
+              // TODO: stop it
               return;
             }
 

@@ -11,9 +11,10 @@ import { useShallow } from 'zustand/react/shallow';
 // Implement the loading for the world. Apply neighbours. Have "peek" to try to get the next one
 
 // TODO: Allow clicks while loading, defer them to when loading is done
-
+// TODO: Capitalize constants throughout the code.
 const size = 8;
 const side = size * (24 + 8); // see CSS to for units (length + border)
+const overload = 0; // TODO: Remove debugging to prevent the infinite scroll
 
 type StoreData = {
   minX: number,
@@ -40,7 +41,7 @@ const ItemRenderer = React.memo(function InnerItemRenderer({ rowIndex, columnInd
   const [key, offsetX, offsetY] = fullItemKey({ columnIndex, rowIndex }, data);
   const section = data.peek(offsetX, offsetY);
   if (!section && !isScrolling) {
-    data.request(offsetX, offsetY);
+    // data.request(offsetX, offsetY);
   }
 
   return (
@@ -102,7 +103,7 @@ export default function Layout({
       }
     }
     */
-    data.process();
+    // data.process();
   }, [data]);
 
   return (
@@ -114,8 +115,8 @@ export default function Layout({
         useIsScrolling
         height={600}
         width={800}
-        columnCount={columns + 4}
-        rowCount={rows + 4}
+        columnCount={columns + overload}
+        rowCount={rows + overload}
         columnWidth={side}
         rowHeight={side}
         onItemsRendered={onItemsRendered}

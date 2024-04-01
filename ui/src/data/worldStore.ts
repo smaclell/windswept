@@ -12,7 +12,7 @@ enum GameState {
 type Creator = (offsetX: number, offsetY: number) => Promise<{ mines: Point[], interactions: Interaction[] }>;
 
 type WorldState = {
-  playing: GameState;
+  gameState: GameState;
   minX: number;
   maxX: number;
   minY: number;
@@ -42,13 +42,15 @@ const directions = [
 // TODO: Encapsulation Fail!!!!
 type RangeData = Parameters<SectionState['applyNeighbour']>[2];
 
-function getRange(tiles: SectionState['_tileState'], dx: number, dy: number): RangeData {
+// TODO: Unit testing this method
+export function __getRange(other: Pick<SectionState, '_tileState'>, dx: number, dy: number): RangeData {
+  const tiles = other._tileState;
   if (dx !== 0 && dy !== 0) {
-    const data = tiles[`${dx === -1 ? 0 : edge},${dy === -1 ? 0 : edge}`];
+    const data = tiles[`${dx === -1 ? edge : 0},${dy === -1 ? edge : 0}`];
     return [{
       point: {
-        x: dx === -1 ? edge : 0,
-        y: dy === -1 ? edge : 0,
+        x: dx === -1 ? 0 : edge,
+        y: dy === -1 ? 0 : edge,
       },
       mineCount: data?.mine ? 1 : 0,
       edgeCount: data ? 1 : 0,
@@ -60,17 +62,18 @@ function getRange(tiles: SectionState['_tileState'], dx: number, dy: number): Ra
   let iy = 0;
   let ix = 0;
 
-  if (dx === -1) {
-    x = edge;
-    iy = 1;
-  } else if (dx === 1) {
+  // These points are relative to the current state
+  if (dx === -1 && dy === 0) {
     x = 0;
     iy = 1;
-  } else if (dy === -1) {
-    y = edge;
-    ix = 1;
-  } else if (dy === 1) {
+  } else if (dx === 1 && dy === 0) {
+    x = edge;
+    iy = 1;
+  } else if (dx === 0 && dy === -1) {
     y = 0;
+    ix = 1;
+  } else if (dx === 0 && dy === 1) {
+    y = edge;
     ix = 1;
   } else {
     throw new Error('Invalid direction');
@@ -81,12 +84,12 @@ function getRange(tiles: SectionState['_tileState'], dx: number, dy: number): Ra
     let mineCount = 0;
     let edgeCount = 0;
     const nx =
-      dx === -1 ? -1 :
-      dx === 1 ? size :
+      dx === -1 ? size :
+      dx === 1 ? -1 :
       x;
     const ny =
-      dy === -1 ? -1 :
-      dy === 1 ? size :
+      dy === -1 ? size :
+      dy === 1 ? -1 :
       y;
     getNeighbourKeys(nx, ny, size).forEach((key) => {
       const data = tiles[key];
@@ -132,19 +135,36 @@ export function createWorldStore(factory: Creator) {
       }));
 
       // TODO: Reduce getState calls and force them to be internal to the stores
+      // TODO: Remove debugging
+      if(target.offsetX === 0 && target.offsetY === -1) {
+        response.mines = [
+          { x: 3, y: 7},
+          { x: 4, y: 7},
+          { x: 5, y: 7},
+        ];
+      }
+
       store.getState().initialize(response.mines);
 
+      // TODO: Remove debugging
+      response.mines.forEach((point) => {
+        store.getState().update('flag', point.x, point.y);
+      });
+
+      // TODO: This is not adding up
       directions.forEach(({ dx, dy }) => {
         const neighbour = peek(target.offsetX + dx, target.offsetY + dy);
         if (neighbour) {
           let storeState = store.getState();
           let neighbourState = neighbour.getState();
 
-          storeState.applyNeighbour(`${dx},${dy}`, neighbourState.update, getRange(neighbourState._tileState, dx, dy));
+          const neighbourRange = __getRange(neighbourState, dx, dy);
+          storeState.applyNeighbour(`${dx},${dy}`, neighbourState.update, neighbourRange);
 
           storeState = store.getState();
           neighbourState = neighbour.getState();
-          neighbourState.applyNeighbour(`${-dx},${-dy}`, storeState.update, getRange(storeState._tileState, -dx, -dy));
+          const storeRange = __getRange(storeState, -dx, -dy);
+          neighbourState.applyNeighbour(`${-dx},${-dy}`, storeState.update, storeRange);
         }
       });
 
@@ -194,7 +214,7 @@ export function createWorldStore(factory: Creator) {
   }
 
   return create<WorldState>((set, get) => ({
-    playing: GameState.Loading,
+    gameState: GameState.Loading,
     _stores: {},
     next: [],
     minX: 0,
@@ -202,14 +222,27 @@ export function createWorldStore(factory: Creator) {
     minY: 0,
     maxY: 0,
     initialize() {
-      const { request, process } = get();
-      for (let x = -3; x <= 3; x++) {
-        for (let y = -3; y <= 3; y++) {
-          request(x, y);
+      const defaultBounds = 1;
+      const { request, process, gameState } = get();
+      if (gameState === GameState.Playing) {
+        return;
+      }
+
+      for (let x = -defaultBounds; x <= defaultBounds; x++) {
+        for (let y = -defaultBounds; y <= defaultBounds; y++) {
+          if (!(x === 0 && y === 0)) {
+            request(x, y);
+          }
         }
       }
 
+      request(0, 0);
+
       process();
+      set((state) => ({
+        ...state,
+        gameState: GameState.Playing,
+      }));
     },
     peek(offsetX: number, offsetY: number) {
       return get()._stores[`${offsetX},${offsetY}`];
@@ -225,6 +258,13 @@ export function createWorldStore(factory: Creator) {
     },
     request(offsetX: number, offsetY: number) {
       queue.push({ offsetX, offsetY, retries: 5 });
+      console.count(`
+
+
+      REQUESTED
+
+      `);
+      console.log({ offsetX, offsetY });
     },
     process() {
       loop(set, get);
